@@ -55,14 +55,12 @@ architecture Behavioral of hourglass_initial_sorting_cell is
     signal axis_in_valid: std_logic;
     signal axis_in_ready: std_logic;
     
-    --funny name to indicate which reg is potentially outputting
-    signal hot_potato: std_logic;
 
 begin
     
-    --input control
-    axis_in_ready <= '1' when (reg_0_full = '0' or reg_1_full = '0') 
-                         else '0';
+    --input control, just need to check for space on the back register
+    --we however don't know where it'll go
+    axis_in_ready <= '1' when reg_1_full = '0' else '0';
     gen_lowest: if LOWEST_FIRST generate
         win_left <= '1' when unsigned(axis_in_left_key) <= unsigned(axis_in_right_key) else '0';
     end generate;
@@ -116,73 +114,48 @@ begin
         end if;
     end process;
     
-    mux_output: process(reg_0_full, reg_1_full, reg_0_key, reg_0_index, reg_1_key, reg_1_index, hot_potato) begin
-        --output the lowest of the two registers
-        axis_out_valid <= reg_0_full or reg_1_full;
         
-        --output the hot potato
-        if (hot_potato = '0') then
-            axis_out_key <= reg_0_key;
-            axis_out_index <= reg_0_index;
-        else --hot potato = 1
-            axis_out_key <= reg_1_key;
-            axis_out_index <= reg_1_index;
-        end if;
-    end process;
+    
     
     seq: process(clk, rst) begin
         if rising_edge(clk) then
             if rst = '1' then
                 reg_0_full <= '0';
                 reg_1_full <= '0';
-                hot_potato <= '0';
             else
-                --prefer the hot potato register
-                if (hot_potato = '0') then
-                    if (reg_0_full = '0') then
-                        --writing to first register
+                --both are empty
+                if (reg_0_full = '0') then
+                    --writing to first register 
+                    reg_0_full <= axis_in_valid;
+                    reg_0_key <= axis_in_key;
+                    reg_0_index(0) <= select_bit;
+                --first is full
+                elsif (reg_1_full = '0') then
+                    --if it goes, grab input
+                    if (axis_out_ready = '1') then
                         reg_0_full <= axis_in_valid;
                         reg_0_key <= axis_in_key;
                         reg_0_index(0) <= select_bit;
-                    elsif (reg_1_full = '0') then
+                    --if it stays, save on second register
+                    else
                         reg_1_full <= axis_in_valid;
                         reg_1_key <= axis_in_key;
                         reg_1_index(0) <= select_bit;
                     end if;
-                else --hot potato = 1
-                    if (reg_1_full = '0') then
-                        --writing to second register
-                        reg_1_full <= axis_in_valid;
-                        reg_1_key <= axis_in_key;
-                        reg_1_index(0) <= select_bit;
-                    elsif (reg_0_full = '0') then
-                        --writing to first register
-                        reg_0_full <= axis_in_valid;
-                        reg_0_key <= axis_in_key;
-                        reg_0_index(0) <= select_bit;
-                    end if;
-                end if;
-                
-                --if outputting, check which one it is and just reset it (key and value D/C)
-                if axis_out_ready = '1' then
-                    --we know it will be valid (and thus we reset) or it will be invalid
-                    --and thus it does not matter if we reset it
-                    if hot_potato = '0' and reg_0_full = '1' then
-                        reg_0_full <= '0';
-                    end if;
-                    if hot_potato = '1' and reg_1_full = '1' then --hot_potato = '1' then
-                        reg_1_full <= '0';
-                    end if;
-                end if;
-                
-                --update hot potato when something outputs
-                if axis_out_ready = '1' and (reg_0_full = '1' or reg_1_full = '1') then
-                    hot_potato <= not hot_potato;
+                --both full and outputting
+                elsif axis_out_ready = '1' then
+                    reg_0_full <= reg_1_full;
+                    reg_0_key <= reg_1_key;
+                    reg_0_index <= reg_1_index;
+                    reg_1_full <= '0';
                 end if;
             end if;
         end if;
     end process;
     
+    axis_out_valid <= reg_0_full;
+    axis_out_key <= reg_0_key;
+    axis_out_index <= reg_0_index;
 
 
 end Behavioral;
