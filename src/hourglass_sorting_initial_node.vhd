@@ -25,8 +25,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity hourglass_sorting_initial_node is
     Generic (
-        KEY_WIDTH: integer := 7;
-        VALUE_WIDTH: integer := 10
+        KEY_WIDTH: integer := 7
     );
     Port ( 
         clk, rst: in std_logic;
@@ -48,12 +47,15 @@ begin
 
     seq: process(clk) begin
         if rising_edge(clk) then
+            if load = '1' then
+                reg_key <= in_key;
+            end if;
+            
             if rst = '1' then
                 reg_full <= '0';
             else
                 if load = '1' then
                     reg_full <= '1';
-                    reg_key <= in_key;
                 elsif axis_out_ready = '1' then
                     reg_full <= '0';
                 end if;

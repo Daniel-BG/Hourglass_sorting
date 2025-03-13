@@ -23,38 +23,34 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity hourglass_sorting_cell is
+entity hourglass_initial_sorting_cell is
     Generic (
         KEY_WIDTH: integer := 7;
-        INDEX_WIDTH: integer := 10;
         LOWEST_FIRST: boolean := true
     );
     Port (
         clk, rst: in std_logic;
         axis_in_left_key: in std_logic_vector(KEY_WIDTH - 1 downto 0);
-        axis_in_left_index: in std_logic_vector(INDEX_WIDTH - 1 downto 0);
         axis_in_left_valid: in std_logic;
         axis_in_left_ready: out std_logic;
         axis_in_right_key: in std_logic_vector(KEY_WIDTH - 1 downto 0);
-        axis_in_right_index: in std_logic_vector(INDEX_WIDTH - 1 downto 0);
         axis_in_right_valid: in std_logic;
         axis_in_right_ready: out std_logic;
         axis_out_key: out std_logic_vector(KEY_WIDTH - 1 downto 0);
-        axis_out_index: out std_logic_vector(INDEX_WIDTH downto 0);
+        axis_out_index: out std_logic_vector(0 downto 0);
         axis_out_valid: out std_logic;
         axis_out_ready: in std_logic 
     );
-end hourglass_sorting_cell;
+end hourglass_initial_sorting_cell;
 
-architecture Behavioral of hourglass_sorting_cell is
+architecture Behavioral of hourglass_initial_sorting_cell is
 
     signal win_left, select_bit: std_logic;
 
     signal reg_0_key, reg_1_key: std_logic_vector(KEY_WIDTH - 1 downto 0);
-    signal reg_0_index, reg_1_index: std_logic_vector(INDEX_WIDTH downto 0);
+    signal reg_0_index, reg_1_index: std_logic_vector(0 downto 0);
     signal reg_0_full, reg_1_full: std_logic;
     
-    signal axis_in_index: std_logic_vector(INDEX_WIDTH - 1 downto 0);
     signal axis_in_key: std_logic_vector(KEY_WIDTH - 1 downto 0);
     signal axis_in_valid: std_logic;
     signal axis_in_ready: std_logic;
@@ -75,15 +71,14 @@ begin
     end generate;
                          
                          
-    mux_input: process(axis_in_left_key, axis_in_left_valid, axis_in_left_index,
-                       axis_in_right_key, axis_in_right_valid, axis_in_right_index,
+    mux_input: process(axis_in_left_key, axis_in_left_valid,
+                       axis_in_right_key, axis_in_right_valid,
                        axis_in_ready, win_left) begin
         --if the first is lower
         if win_left = '1' then
             --if it is valid, output it, otherwise output right
             if (axis_in_left_valid = '1') then
                 --mux current side
-                axis_in_index <= axis_in_left_index;
                 axis_in_key <= axis_in_left_key;
                 axis_in_valid <= axis_in_left_valid;
                 axis_in_left_ready <= axis_in_ready;
@@ -92,7 +87,6 @@ begin
                 select_bit <= '0';
             else
                 --mux current side
-                axis_in_index <= axis_in_right_index;
                 axis_in_key <= axis_in_right_key;
                 axis_in_valid <= axis_in_right_valid;
                 axis_in_right_ready <= axis_in_ready;
@@ -104,7 +98,6 @@ begin
             --right is >=, if it is valid, output it
             if (axis_in_right_valid = '1') then
                 --mux current side
-                axis_in_index <= axis_in_right_index;
                 axis_in_key <= axis_in_right_key;
                 axis_in_valid <= axis_in_right_valid;
                 axis_in_right_ready <= axis_in_ready;
@@ -113,7 +106,6 @@ begin
                 select_bit <= '1';
             else
                 --mux current side
-                axis_in_index <= axis_in_left_index;
                 axis_in_key <= axis_in_left_key;
                 axis_in_valid <= axis_in_left_valid;
                 axis_in_left_ready <= axis_in_ready;
@@ -151,23 +143,23 @@ begin
                         --writing to first register
                         reg_0_full <= axis_in_valid;
                         reg_0_key <= axis_in_key;
-                        reg_0_index <= select_bit & axis_in_index;
+                        reg_0_index(0) <= select_bit;
                     elsif (reg_1_full = '0') then
                         reg_1_full <= axis_in_valid;
                         reg_1_key <= axis_in_key;
-                        reg_1_index <= select_bit & axis_in_index;
+                        reg_1_index(0) <= select_bit;
                     end if;
                 else --hot potato = 1
                     if (reg_1_full = '0') then
                         --writing to second register
                         reg_1_full <= axis_in_valid;
                         reg_1_key <= axis_in_key;
-                        reg_1_index <= select_bit & axis_in_index;
+                        reg_1_index(0) <= select_bit;
                     elsif (reg_0_full = '0') then
                         --writing to first register
                         reg_0_full <= axis_in_valid;
                         reg_0_key <= axis_in_key;
-                        reg_0_index <= select_bit & axis_in_index;
+                        reg_0_index(0) <= select_bit;
                     end if;
                 end if;
                 

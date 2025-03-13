@@ -27,18 +27,16 @@ use IEEE.STD_LOGIC_1164.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity hourglass_sorting_tree is
+entity hourglass_initial_sorting_tree is
     Generic (
         NUMBER_OF_ELEMENTS: integer := 21;
         KEY_WIDTH: integer := 8;
-        INDEX_WIDTH: integer := 1;
         OUTPUT_INDEX_WIDTH: integer := 5;
         LOWEST_FIRST: boolean := true
     );
     Port ( 
         clk, rst: in std_logic;
         axis_in_keys: in std_logic_vector(NUMBER_OF_ELEMENTS*KEY_WIDTH - 1 downto 0);
-        axis_in_indexs: in std_logic_vector(NUMBER_OF_ELEMENTS*INDEX_WIDTH - 1 downto 0);
         axis_in_valids: in std_logic_vector(NUMBER_OF_ELEMENTS - 1 downto 0);
         axis_in_readys: out std_logic_vector(NUMBER_OF_ELEMENTS - 1 downto 0);
         axis_out_key: out std_logic_vector(KEY_WIDTH - 1 downto 0);
@@ -46,12 +44,12 @@ entity hourglass_sorting_tree is
         axis_out_valid: out std_logic;
         axis_out_ready: in std_logic 
     );
-end hourglass_sorting_tree;
+end hourglass_initial_sorting_tree;
 
-architecture Behavioral of hourglass_sorting_tree is
+architecture Behavioral of hourglass_initial_sorting_tree is
 
     signal axis_keys: std_logic_vector(((NUMBER_OF_ELEMENTS+1)/2)*KEY_WIDTH - 1 downto 0);
-    signal axis_indexs: std_logic_vector(((NUMBER_OF_ELEMENTS+1)/2)*(INDEX_WIDTH + 1)- 1 downto 0);
+    signal axis_indexs: std_logic_vector(((NUMBER_OF_ELEMENTS+1)/2) - 1 downto 0);
     signal axis_valids: std_logic_vector(((NUMBER_OF_ELEMENTS+1)/2) - 1 downto 0);
     signal axis_readys: std_logic_vector(((NUMBER_OF_ELEMENTS+1)/2) - 1 downto 0);
 begin
@@ -61,24 +59,21 @@ begin
         constant li: integer := j*2 + 1 + (NUMBER_OF_ELEMENTS mod 2);
         constant ri: integer := j*2 + (NUMBER_OF_ELEMENTS mod 2);
     begin
-        sorting_cell: entity work.hourglass_sorting_cell 
+        sorting_cell: entity work.hourglass_initial_sorting_cell 
             Generic map(
                 KEY_WIDTH => KEY_WIDTH,
-                INDEX_WIDTH => INDEX_WIDTH,
                 LOWEST_FIRST => LOWEST_FIRST
             )
             Port map (
                 clk => clk, rst => rst,
                 axis_in_left_key => axis_in_keys((li+1)*KEY_WIDTH - 1 downto (li)*KEY_WIDTH),
-                axis_in_left_index => axis_in_indexs((li+1)*INDEX_WIDTH - 1 downto (li)*INDEX_WIDTH),
                 axis_in_left_valid => axis_in_valids(li),
                 axis_in_left_ready => axis_in_readys(li),
                 axis_in_right_key => axis_in_keys((ri+1)*KEY_WIDTH - 1 downto (ri)*KEY_WIDTH),
-                axis_in_right_index => axis_in_indexs((ri+1)*INDEX_WIDTH - 1 downto (ri)*INDEX_WIDTH),
                 axis_in_right_valid => axis_in_valids(ri),
                 axis_in_right_ready => axis_in_readys(ri),
                 axis_out_key => axis_keys((i+1)*KEY_WIDTH - 1 downto i*KEY_WIDTH),
-                axis_out_index => axis_indexs((i+1)*(INDEX_WIDTH+1) - 1 downto i*(INDEX_WIDTH+1)),
+                axis_out_index => axis_indexs(i downto i),
                 axis_out_valid => axis_valids(i),
                 axis_out_ready => axis_readys(i)
             );
@@ -87,24 +82,21 @@ begin
     --for the outlier just pipe an axis and leave the other open 
     --let the tool optimize logic away
     gen_outlier: if NUMBER_OF_ELEMENTS mod 2 = 1 generate
-        sorting_cell: entity work.hourglass_sorting_cell 
+        sorting_cell: entity work.hourglass_initial_sorting_cell 
             Generic map(
                 KEY_WIDTH => KEY_WIDTH,
-                INDEX_WIDTH => INDEX_WIDTH,
                 LOWEST_FIRST => LOWEST_FIRST
             )
             Port map (
                 clk => clk, rst => rst,
                 axis_in_left_key => axis_in_keys(KEY_WIDTH - 1 downto 0),
-                axis_in_left_index => axis_in_indexs(INDEX_WIDTH - 1 downto 0),
                 axis_in_left_valid => axis_in_valids(0),
                 axis_in_left_ready => axis_in_readys(0),
                 axis_in_right_key => (others => '0'),
-                axis_in_right_index => (others => '0'),
                 axis_in_right_valid => '0',
                 axis_in_right_ready => open,
                 axis_out_key => axis_keys(KEY_WIDTH - 1 downto 0),
-                axis_out_index => axis_indexs(INDEX_WIDTH downto 0),
+                axis_out_index => axis_indexs(0 downto 0),
                 axis_out_valid => axis_valids(0),
                 axis_out_ready => axis_readys(0)
             );
@@ -115,7 +107,7 @@ begin
         generic map (
             NUMBER_OF_ELEMENTS => (NUMBER_OF_ELEMENTS+1) / 2,
             KEY_WIDTH => KEY_WIDTH,
-            INDEX_WIDTH => INDEX_WIDTH + 1,
+            INDEX_WIDTH => 1,
             OUTPUT_INDEX_WIDTH => OUTPUT_INDEX_WIDTH,
             LOWEST_FIRST => LOWEST_FIRST
         )
