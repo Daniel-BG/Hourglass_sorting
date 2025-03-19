@@ -26,7 +26,8 @@ use IEEE.NUMERIC_STD.ALL;
 entity hourglass_initial_sorting_cell is
     Generic (
         KEY_WIDTH: integer := 7;
-        LOWEST_FIRST: boolean := true
+        LOWEST_FIRST: boolean := true;
+        USE_SIGNED: boolean := true
     );
     Port (
         clk, rst: in std_logic;
@@ -61,10 +62,16 @@ begin
     --input control, just need to check for space on the back register
     --we however don't know where it'll go
     axis_in_ready <= '1' when reg_1_full = '0' else '0';
-    gen_lowest: if LOWEST_FIRST generate
+    gen_lowest_s: if LOWEST_FIRST and USE_SIGNED generate
+        win_left <= '1' when signed(axis_in_left_key) <= signed(axis_in_right_key) else '0';
+    end generate;
+    gen_highest_s: if (not LOWEST_FIRST) and USE_SIGNED generate
+        win_left <= '1' when signed(axis_in_left_key) >= signed(axis_in_right_key) else '0';
+    end generate;
+    gen_lowest_u: if LOWEST_FIRST and (not USE_SIGNED) generate
         win_left <= '1' when unsigned(axis_in_left_key) <= unsigned(axis_in_right_key) else '0';
     end generate;
-    gen_highest: if not LOWEST_FIRST generate
+    gen_highest_u: if (not LOWEST_FIRST) and (not USE_SIGNED) generate
         win_left <= '1' when unsigned(axis_in_left_key) >= unsigned(axis_in_right_key) else '0';
     end generate;
                          

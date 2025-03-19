@@ -28,7 +28,8 @@ entity hourglass_sorting_module is
         NUMBER_OF_ELEMENTS: integer := 882;
         KEY_WIDTH: integer := 8;
         OUTPUT_INDEX_WIDTH: integer := 10;
-        LOWEST_FIRST: boolean := true
+        LOWEST_FIRST: boolean := true;
+        USE_SIGNED: boolean := true
     );
     Port ( 
         clk, rst: in std_logic;
@@ -71,7 +72,8 @@ begin
             NUMBER_OF_ELEMENTS => NUMBER_OF_ELEMENTS,
             KEY_WIDTH => KEY_WIDTH,
             OUTPUT_INDEX_WIDTH => OUTPUT_INDEX_WIDTH,
-            LOWEST_FIRST => LOWEST_FIRST
+            LOWEST_FIRST => LOWEST_FIRST,
+            USE_SIGNED => USE_SIGNED
         )
         port map (
             clk => clk, rst => rst,

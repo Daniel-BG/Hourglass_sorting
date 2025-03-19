@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 module test_hourglass_sorter;
-    parameter NUMBER_OF_ELEMENTS = 21;
+    parameter NUMBER_OF_ELEMENTS = 24;
     parameter KEY_WIDTH = 8;
     parameter OUTPUT_INDEX_WIDTH = 5;
     

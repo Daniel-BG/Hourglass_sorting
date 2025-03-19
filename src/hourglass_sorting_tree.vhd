@@ -33,7 +33,8 @@ entity hourglass_sorting_tree is
         KEY_WIDTH: integer := 8;
         INDEX_WIDTH: integer := 1;
         OUTPUT_INDEX_WIDTH: integer := 5;
-        LOWEST_FIRST: boolean := true
+        LOWEST_FIRST: boolean := true;
+        USE_SIGNED: boolean := true
     );
     Port ( 
         clk, rst: in std_logic;
@@ -65,7 +66,8 @@ begin
             Generic map(
                 KEY_WIDTH => KEY_WIDTH,
                 INDEX_WIDTH => INDEX_WIDTH,
-                LOWEST_FIRST => LOWEST_FIRST
+                LOWEST_FIRST => LOWEST_FIRST,
+                USE_SIGNED => USE_SIGNED
             )
             Port map (
                 clk => clk, rst => rst,
@@ -91,7 +93,8 @@ begin
             Generic map(
                 KEY_WIDTH => KEY_WIDTH,
                 INDEX_WIDTH => INDEX_WIDTH,
-                LOWEST_FIRST => LOWEST_FIRST
+                LOWEST_FIRST => LOWEST_FIRST,
+                USE_SIGNED => USE_SIGNED
             )
             Port map (
                 clk => clk, rst => rst,
@@ -117,7 +120,8 @@ begin
             KEY_WIDTH => KEY_WIDTH,
             INDEX_WIDTH => INDEX_WIDTH + 1,
             OUTPUT_INDEX_WIDTH => OUTPUT_INDEX_WIDTH,
-            LOWEST_FIRST => LOWEST_FIRST
+            LOWEST_FIRST => LOWEST_FIRST,
+            USE_SIGNED => USE_SIGNED
         )
         port map (
             clk => clk, rst => rst,
